@@ -1,19 +1,19 @@
 apply plugin: 'com.android.application'
 
 android {
-        compileSdkVersion 20
-        buildToolsVersion "19.1.0"
+        compileSdkVersion 27
+        buildToolsVersion "27.0.3"
 
     defaultConfig {
         applicationId "net.dheera.wearcamera"
-        minSdkVersion 16
-        targetSdkVersion 20
+        minSdkVersion 24
+        targetSdkVersion 27
         versionCode 12
         versionName "2.1"
     }
     buildTypes {
         release {
-            runProguard false
+            minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
