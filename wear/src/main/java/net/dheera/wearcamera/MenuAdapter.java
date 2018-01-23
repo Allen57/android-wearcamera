@@ -7,28 +7,25 @@ import android.os.Handler;
 import android.support.wearable.view.FragmentGridPagerAdapter;
 import android.util.Log;
 import android.view.View;
-public class MenuAdapter extends FragmentGridPagerAdapter {
 
-    private final Context mContext;
-    private final Handler mHandler;
-    public final CameraFragment mCameraFragment;
+public class MenuAdapter extends FragmentGridPagerAdapter {
 
     public static final int MESSAGE_SNAP = 1;
     public static final int MESSAGE_SWITCH = 2;
     public static final int MESSAGE_TIMER = 3;
     public static final int MESSAGE_FLASH = 4;
-
     private static int currentFlash = 0;
-    int[] currentFlashText = { R.string.action_flash_0, R.string.action_flash_1, R.string.action_flash_2 };
-    int[] currentFlashIcon = { R.drawable.action_flash_0, R.drawable.action_flash_1, R.drawable.action_flash_2 };
-
     private static int currentCamera = 0;
-    int[] currentCameraText = { R.string.action_switch_0, R.string.action_switch_1 };
-    int[] currentCameraIcon = { R.drawable.action_switch_0, R.drawable.action_switch_1 };
-
     private static int currentTimer = 0;
-    int[] currentTimerText = { R.string.action_timer_0, R.string.action_timer_1, R.string.action_timer_2 };
-    int[] currentTimerIcon = { R.drawable.action_timer_0, R.drawable.action_timer_1, R.drawable.action_timer_2 };
+    public final CameraFragment mCameraFragment;
+    private final Context mContext;
+    private final Handler mHandler;
+    int[] currentFlashText = {R.string.action_flash_0, R.string.action_flash_1, R.string.action_flash_2, R.string.action_flash_3};
+    int[] currentFlashIcon = {R.drawable.action_flash_0, R.drawable.action_flash_1, R.drawable.action_flash_2, R.drawable.action_flash_3};
+    int[] currentCameraText = {R.string.action_switch_0, R.string.action_switch_1};
+    int[] currentCameraIcon = {R.drawable.action_switch_0, R.drawable.action_switch_1};
+    int[] currentTimerText = {R.string.action_timer_0, R.string.action_timer_1, R.string.action_timer_2};
+    int[] currentTimerIcon = {R.drawable.action_timer_0, R.drawable.action_timer_1, R.drawable.action_timer_2};
 
     public MenuAdapter(Context ctx, FragmentManager fm, Handler h) {
         super(fm);
@@ -58,17 +55,17 @@ public class MenuAdapter extends FragmentGridPagerAdapter {
     public Fragment getFragment(int rowNum, int colNum) {
         Log.d("blah", String.format("getFragment(%d, %d)", rowNum, colNum));
 
-        if(colNum == 0) {
+        if (colNum == 0) {
             return mCameraFragment;
         }
 
-        if(colNum == 1) {
+        if (colNum == 1) {
             final ActionFragment switchAction = ActionFragment.newInstance(currentCameraIcon[currentCamera], currentCameraText[currentCamera]);
             switchAction.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
                     Log.d("blah", "clicked switch");
-                    currentCamera = ( currentCamera + 1 ) % currentCameraText.length;
+                    currentCamera = (currentCamera + 1) % currentCameraText.length;
                     switchAction.setTextRes(currentCameraText[currentCamera]);
                     switchAction.setIconRes(currentCameraIcon[currentCamera]);
                     mHandler.obtainMessage(MESSAGE_SWITCH, currentCamera, -1).sendToTarget();
@@ -77,13 +74,13 @@ public class MenuAdapter extends FragmentGridPagerAdapter {
             return switchAction;
         }
 
-        if(colNum == 2) {
+        if (colNum == 2) {
             final ActionFragment flashAction = ActionFragment.newInstance(currentFlashIcon[currentFlash], currentFlashText[currentFlash]);
             flashAction.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
                     Log.d("blah", "clicked flash");
-                    currentFlash = ( currentFlash + 1 ) % currentFlashText.length;
+                    currentFlash = (currentFlash + 1) % currentFlashText.length;
                     flashAction.setTextRes(currentFlashText[currentFlash]);
                     flashAction.setIconRes(currentFlashIcon[currentFlash]);
                     mHandler.obtainMessage(MESSAGE_FLASH, currentFlash, -1).sendToTarget();
@@ -92,13 +89,13 @@ public class MenuAdapter extends FragmentGridPagerAdapter {
             return flashAction;
         }
 
-        if(colNum == 3) {
+        if (colNum == 3) {
             final ActionFragment timerAction = ActionFragment.newInstance(currentTimerIcon[currentTimer], currentTimerText[currentTimer]);
             timerAction.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
                     Log.d("blah", "clicked timer");
-                    currentTimer = ( currentTimer + 1 ) % currentTimerText.length;
+                    currentTimer = (currentTimer + 1) % currentTimerText.length;
                     timerAction.setTextRes(currentTimerText[currentTimer]);
                     timerAction.setIconRes(currentTimerIcon[currentTimer]);
                     mHandler.obtainMessage(MESSAGE_TIMER, currentTimer, -1).sendToTarget();

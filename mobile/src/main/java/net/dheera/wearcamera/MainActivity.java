@@ -60,27 +60,27 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback {
     private boolean readyToProcessImage = true;
     private MessageApi.MessageListener mMessageListener = new MessageApi.MessageListener() {
         @Override
-        public void onMessageReceived (MessageEvent m){
-            if(D) Log.d(TAG, "onMessageReceived: " + m.getPath());
+        public void onMessageReceived(MessageEvent m) {
+            if (D) Log.d(TAG, "onMessageReceived: " + m.getPath());
             lastMessageTime = System.currentTimeMillis();
             Scanner s = new Scanner(m.getPath());
             String command = s.next();
-            if(command.equals("snap")) {
+            if (command.equals("snap")) {
                 doSnap();
-            } else if(command.equals("switch")) {
+            } else if (command.equals("switch")) {
                 int arg0 = 0;
                 if (s.hasNextInt()) arg0 = s.nextInt();
                 doSwitch(arg0);
-            } else if(command.equals("flash")) {
+            } else if (command.equals("flash")) {
                 int arg0 = 0;
                 if (s.hasNextInt()) arg0 = s.nextInt();
                 doFlash(arg0);
-            } else if(command.equals("received")) {
+            } else if (command.equals("received")) {
                 long arg0 = 0;
-                if(s.hasNextLong()) arg0 = s.nextLong();
+                if (s.hasNextLong()) arg0 = s.nextLong();
                 displayTimeLag = System.currentTimeMillis() - arg0;
-                if(D) Log.d(TAG, String.format("frame lag time: %d ms", displayTimeLag));
-            } else if(command.equals("stop")) {
+                if (D) Log.d(TAG, String.format("frame lag time: %d ms", displayTimeLag));
+            } else if (command.equals("stop")) {
                 moveTaskToBack(true);
             }
         }
@@ -91,9 +91,10 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback {
         nodes.setResultCallback(new ResultCallback<NodeApi.GetConnectedNodesResult>() {
             @Override
             public void onResult(NodeApi.GetConnectedNodesResult result) {
-                if(result.getNodes().size()>0) {
+                if (result.getNodes().size() > 0) {
                     mWearableNode = result.getNodes().get(0);
-                    if(D) Log.d(TAG, "Found wearable: name=" + mWearableNode.getDisplayName() + ", id=" + mWearableNode.getId());
+                    if (D)
+                        Log.d(TAG, "Found wearable: name=" + mWearableNode.getDisplayName() + ", id=" + mWearableNode.getId());
                 } else {
                     mWearableNode = null;
                 }
@@ -103,14 +104,14 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback {
 
     @Override
     protected void onDestroy() {
-        if(D) Log.d(TAG, "onDestroy");
+        if (D) Log.d(TAG, "onDestroy");
         Wearable.MessageApi.removeListener(mGoogleApiClient, mMessageListener);
         super.onDestroy();
     }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        if(D) Log.d(TAG, "onCreate");
+        if (D) Log.d(TAG, "onCreate");
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
@@ -123,28 +124,29 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback {
 
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
-            mGoogleApiClient = new GoogleApiClient.Builder(this)
-                    .addConnectionCallbacks(new GoogleApiClient.ConnectionCallbacks() {
-                        @Override
-                        public void onConnected(Bundle connectionHint) {
-                            if(D) Log.d(TAG, "onConnected: " + connectionHint);
-                            findWearableNode();
-                            Wearable.MessageApi.addListener(mGoogleApiClient, mMessageListener);
-                        }
-                        @Override
-                        public void onConnectionSuspended(int cause) {
-                            if(D) Log.d(TAG, "onConnectionSuspended: " + cause);
-                        }
-                    })
-                    .addOnConnectionFailedListener(new GoogleApiClient.OnConnectionFailedListener() {
-                        @Override
-                        public void onConnectionFailed(ConnectionResult result) {
-                            if(D) Log.d(TAG, "onConnectionFailed: " + result);
-                        }
-                    })
-                    .addApi(Wearable.API)
-                    .build();
-            mGoogleApiClient.connect();
+        mGoogleApiClient = new GoogleApiClient.Builder(this)
+                .addConnectionCallbacks(new GoogleApiClient.ConnectionCallbacks() {
+                    @Override
+                    public void onConnected(Bundle connectionHint) {
+                        if (D) Log.d(TAG, "onConnected: " + connectionHint);
+                        findWearableNode();
+                        Wearable.MessageApi.addListener(mGoogleApiClient, mMessageListener);
+                    }
+
+                    @Override
+                    public void onConnectionSuspended(int cause) {
+                        if (D) Log.d(TAG, "onConnectionSuspended: " + cause);
+                    }
+                })
+                .addOnConnectionFailedListener(new GoogleApiClient.OnConnectionFailedListener() {
+                    @Override
+                    public void onConnectionFailed(ConnectionResult result) {
+                        if (D) Log.d(TAG, "onConnectionFailed: " + result);
+                    }
+                })
+                .addApi(Wearable.API)
+                .build();
+        mGoogleApiClient.connect();
 
 
         // slowly subtract from the lag; in case the lag
@@ -161,57 +163,63 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback {
         mTimer.scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
-                if(displayFrameLag>1) { displayFrameLag--; }
-                if(displayTimeLag>1000) { displayTimeLag-=1000; }
+                if (displayFrameLag > 1) {
+                    displayFrameLag--;
+                }
+                if (displayTimeLag > 1000) {
+                    displayTimeLag -= 1000;
+                }
             }
         }, 0, 1000);
     }
 
     public void setCameraDisplayOrientation() {
-            Camera.CameraInfo info = new Camera.CameraInfo();
+        Camera.CameraInfo info = new Camera.CameraInfo();
         Camera.getCameraInfo(currentCamera, info);
-            int rotation = this.getWindowManager().getDefaultDisplay().getRotation();
-            int degrees = 0;
-            switch (rotation) {
-                case Surface.ROTATION_0:
-                    degrees = 0;
-                    break;
-                case Surface.ROTATION_90:
-                    degrees = 90;
-                    break;
-                case Surface.ROTATION_180:
-                    degrees = 180;
-                    break;
-                case Surface.ROTATION_270:
-                    degrees = 270;
-                    break;
-            }
-            int resultA = 0, resultB = 0;
-            if(currentCamera == Camera.CameraInfo.CAMERA_FACING_BACK) {
-                resultA = (info.orientation - degrees + 360) % 360;
-                resultB = (info.orientation - degrees + 360) % 360;
-                mCamera.setDisplayOrientation(resultA);
-            } else {
-                resultA = (360 + 360 - info.orientation - degrees) % 360;
-                resultB = (info.orientation + degrees) % 360;
-                mCamera.setDisplayOrientation(resultA);
-            }
-            Camera.Parameters params = mCamera.getParameters();
-            params.setRotation(resultB);
-            mCamera.setParameters(params);
-            mCameraOrientation = resultB;
+        int rotation = this.getWindowManager().getDefaultDisplay().getRotation();
+        int degrees = 0;
+        switch (rotation) {
+            case Surface.ROTATION_0:
+                degrees = 0;
+                break;
+            case Surface.ROTATION_90:
+                degrees = 90;
+                break;
+            case Surface.ROTATION_180:
+                degrees = 180;
+                break;
+            case Surface.ROTATION_270:
+                degrees = 270;
+                break;
+        }
+        int resultA = 0, resultB = 0;
+        if (currentCamera == Camera.CameraInfo.CAMERA_FACING_BACK) {
+            resultA = (info.orientation - degrees + 360) % 360;
+            resultB = (info.orientation - degrees + 360) % 360;
+            mCamera.setDisplayOrientation(resultA);
+        } else {
+            resultA = (360 + 360 - info.orientation - degrees) % 360;
+            resultB = (info.orientation + degrees) % 360;
+            mCamera.setDisplayOrientation(resultA);
+        }
+        Camera.Parameters params = mCamera.getParameters();
+        params.setRotation(resultB);
+        mCamera.setParameters(params);
+        mCameraOrientation = resultB;
     }
 
 
     public void doFlash(int arg0) {
-        if(arg0 == 0)
+        if (arg0 == 0)
             currentFlashMode = Camera.Parameters.FLASH_MODE_OFF;
-        else if(arg0 == 1)
+        else if (arg0 == 1)
             currentFlashMode = Camera.Parameters.FLASH_MODE_AUTO;
-        else if(arg0 == 2)
+        else if (arg0 == 2)
             currentFlashMode = Camera.Parameters.FLASH_MODE_ON;
+        else if (arg0 == 3)
+            currentFlashMode = Camera.Parameters.FLASH_MODE_TORCH;
 
-        if((mCamera != null) && mPreviewRunning) {
+        if ((mCamera != null) && mPreviewRunning) {
             Camera.Parameters p = mCamera.getParameters();
             p.setFlashMode(currentFlashMode);
             mCamera.setParameters(p);
@@ -223,8 +231,8 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback {
 
         int oldCurrentCamera = currentCamera;
 
-        if(Camera.getNumberOfCameras()>=2) {
-            if(arg0 == 1) {
+        if (Camera.getNumberOfCameras() >= 2) {
+            if (arg0 == 1) {
                 currentCamera = Camera.CameraInfo.CAMERA_FACING_FRONT;
             } else {
                 currentCamera = Camera.CameraInfo.CAMERA_FACING_BACK;
@@ -233,7 +241,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback {
             currentCamera = Camera.CameraInfo.CAMERA_FACING_BACK;
         }
 
-        if((oldCurrentCamera != currentCamera) && mPreviewRunning) {
+        if ((oldCurrentCamera != currentCamera) && mPreviewRunning) {
             surfaceDestroyed(mSurfaceHolder);
             if (arg0 == 0) {
                 surfaceCreated(mSurfaceHolder);
@@ -245,9 +253,9 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback {
         }
     }
 
-     public void doSnap(){
-        if(mCamera == null || !mPreviewRunning) {
-            if(D) Log.d(TAG, "tried to snap when camera was inactive");
+    public void doSnap() {
+        if (mCamera == null || !mPreviewRunning) {
+            if (D) Log.d(TAG, "tried to snap when camera was inactive");
             return;
         }
         Camera.Parameters params = mCamera.getParameters();
@@ -269,7 +277,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback {
                     outStream = new FileOutputStream(filename);
                     outStream.write(data);
                     outStream.close();
-                    if(D) Log.d(TAG, "wrote bytes: " + data.length);
+                    if (D) Log.d(TAG, "wrote bytes: " + data.length);
                     sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.parse("file://" + filename)));
                     BitmapFactory.Options opts = new BitmapFactory.Options();
                     opts.inSampleSize = 4;
@@ -285,12 +293,12 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback {
                     });
                     int smallWidth, smallHeight;
                     int dimension = PREFERRED_DIMENSION;
-                    if(bmp.getWidth() > bmp.getHeight()) {
+                    if (bmp.getWidth() > bmp.getHeight()) {
                         smallWidth = dimension;
-                        smallHeight = dimension*bmp.getHeight()/bmp.getWidth();
+                        smallHeight = dimension * bmp.getHeight() / bmp.getWidth();
                     } else {
                         smallHeight = dimension;
-                        smallWidth = dimension*bmp.getWidth()/bmp.getHeight();
+                        smallWidth = dimension * bmp.getWidth() / bmp.getHeight();
                     }
                     Bitmap bmpSmall = Bitmap.createScaledBitmap(bmp, smallWidth, smallHeight, false);
                     ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -321,12 +329,12 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback {
                         callback.onResult(result);
                     }
                     if (!result.getStatus().isSuccess()) {
-                        if(D) Log.d(TAG, "ERROR: failed to send Message: " + result.getStatus());
+                        if (D) Log.d(TAG, "ERROR: failed to send Message: " + result.getStatus());
                     }
                 }
             });
         } else {
-            if(D) Log.d(TAG, "ERROR: tried to send message before device was found");
+            if (D) Log.d(TAG, "ERROR: tried to send message before device was found");
         }
     }
 
@@ -350,7 +358,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback {
         if (mPreviewRunning) {
             mCamera.stopPreview();
         }
-        if (mSurfaceHolder.getSurface() == null){
+        if (mSurfaceHolder.getSurface() == null) {
             return;
         }
         Camera.Parameters p = mCamera.getParameters();
@@ -366,7 +374,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback {
                 setCameraDisplayOrientation();
                 mCamera.setPreviewCallback(new Camera.PreviewCallback() {
                     public void onPreviewFrame(byte[] data, Camera arg1) {
-                        if (mWearableNode != null && readyToProcessImage && mPreviewRunning && displayFrameLag<6 && displayTimeLag<2000
+                        if (mWearableNode != null && readyToProcessImage && mPreviewRunning && displayFrameLag < 6 && displayTimeLag < 2000
                                 && System.currentTimeMillis() - lastMessageTime < 4000) {
                             readyToProcessImage = false;
                             Camera.Size previewSize = mCamera.getParameters().getPreviewSize();
@@ -376,9 +384,9 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback {
                             int smallWidth, smallHeight;
                             int dimension;
                             // stream is lagging, cut resolution and catch up
-                            if(displayTimeLag > 1500) {
+                            if (displayTimeLag > 1500) {
                                 dimension = PREFERRED_DIMENSION / 4;
-                            } else if(displayTimeLag > 500) {
+                            } else if (displayTimeLag > 500) {
                                 dimension = PREFERRED_DIMENSION / 2;
                             } else {
                                 dimension = PREFERRED_DIMENSION;
@@ -386,7 +394,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback {
                             // Ensure the result is at least of the dimension size (width and height)
                             if (previewSize.width > previewSize.height) {
                                 smallHeight = dimension;
-                                smallWidth = dimension*previewSize.width/previewSize.height;
+                                smallWidth = dimension * previewSize.width / previewSize.height;
                             } else {
                                 smallWidth = dimension;
                                 smallHeight = dimension * previewSize.height / previewSize.width;
@@ -403,7 +411,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback {
                             sendToWearable(String.format("show %d", System.currentTimeMillis()), baos.toByteArray(), new ResultCallback<MessageApi.SendMessageResult>() {
                                 @Override
                                 public void onResult(MessageApi.SendMessageResult result) {
-                                    if(displayFrameLag>0) displayFrameLag--;
+                                    if (displayFrameLag > 0) displayFrameLag--;
                                 }
                             });
                             bmp.recycle();
@@ -455,9 +463,9 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback {
         return super.onOptionsItemSelected(item);
     }
 
-    public int[] decodeYUV420SP( byte[] yuv420sp, int width, int height) {
+    public int[] decodeYUV420SP(byte[] yuv420sp, int width, int height) {
         final int frameSize = width * height;
-        int rgb[]=new int[width*height];
+        int rgb[] = new int[width * height];
         for (int j = 0, yp = 0; j < height; j++) {
             int uvp = frameSize + (j >> 1) * width, u = 0, v = 0;
             for (int i = 0; i < width; i++, yp++) {
@@ -471,13 +479,17 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback {
                 int r = (y1192 + 1634 * v);
                 int g = (y1192 - 833 * v - 400 * u);
                 int b = (y1192 + 2066 * u);
-                if (r < 0) r = 0; else if (r > 262143) r = 262143;
-                if (g < 0) g = 0; else if (g > 262143) g = 262143;
-                if (b < 0) b = 0; else if (b > 262143) b = 262143;
+                if (r < 0) r = 0;
+                else if (r > 262143) r = 262143;
+                if (g < 0) g = 0;
+                else if (g > 262143) g = 262143;
+                if (b < 0) b = 0;
+                else if (b > 262143) b = 262143;
                 rgb[yp] = 0xff000000 | ((r << 6) & 0xff0000)
                         | ((g >> 2) & 0xff00) | ((b >> 10) & 0xff);
             }
         }
-        return rgb;   }
+        return rgb;
+    }
 
 }
