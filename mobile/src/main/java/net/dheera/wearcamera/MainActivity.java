@@ -1,7 +1,6 @@
 package net.dheera.wearcamera;
 
 import android.app.Activity;
-import android.bluetooth.BluetoothAdapter;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -10,10 +9,6 @@ import android.hardware.Camera;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.Debug;
-import android.os.Environment;
-import android.os.Handler;
-import android.os.Message;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -23,7 +18,6 @@ import android.view.SurfaceView;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.ImageView;
-import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -35,46 +29,35 @@ import com.google.android.gms.wearable.Node;
 import com.google.android.gms.wearable.NodeApi;
 import com.google.android.gms.wearable.Wearable;
 
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Scanner;
-import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 
 
 public class MainActivity extends Activity implements SurfaceHolder.Callback {
 
+    public static final int PREFERRED_DIMENSION = 400;
     private static final String TAG = "WearCamera";
     private static final boolean D = true;
+    private static int currentCamera = Camera.CameraInfo.CAMERA_FACING_BACK;
+    private static String currentFlashMode = Camera.Parameters.FLASH_MODE_OFF;
+    public int mCameraOrientation;
+    public boolean mPreviewRunning = false;
     private int displayFrameLag = 0;
     private long lastMessageTime = 0;
     private long displayTimeLag = 0;
-
     private SurfaceHolder mSurfaceHolder;
     private SurfaceView mSurfaceView;
     private ImageView mImageView;
     private Camera mCamera;
-    public int mCameraOrientation;
-    public boolean mPreviewRunning=false;
     private GoogleApiClient mGoogleApiClient;
     private Node mWearableNode = null;
     private boolean readyToProcessImage = true;
-
-    private static int currentCamera = Camera.CameraInfo.CAMERA_FACING_BACK;
-    private static String currentFlashMode = Camera.Parameters.FLASH_MODE_OFF;
-
     private MessageApi.MessageListener mMessageListener = new MessageApi.MessageListener() {
         @Override
         public void onMessageReceived (MessageEvent m){
@@ -131,12 +114,12 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        mSurfaceView = (SurfaceView) findViewById(R.id.surfaceView);
+        mSurfaceView = findViewById(R.id.surfaceView);
         mSurfaceHolder = mSurfaceView.getHolder();
         mSurfaceHolder.addCallback(this);
         mSurfaceHolder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
 
-        mImageView = (ImageView) findViewById(R.id.imageView);
+        mImageView = findViewById(R.id.imageView);
 
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
@@ -186,7 +169,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback {
 
     public void setCameraDisplayOrientation() {
             Camera.CameraInfo info = new Camera.CameraInfo();
-            mCamera.getCameraInfo(currentCamera, info);
+        Camera.getCameraInfo(currentCamera, info);
             int rotation = this.getWindowManager().getDefaultDisplay().getRotation();
             int degrees = 0;
             switch (rotation) {
@@ -301,7 +284,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback {
                         }
                     });
                     int smallWidth, smallHeight;
-                    int dimension = 280;
+                    int dimension = PREFERRED_DIMENSION;
                     if(bmp.getWidth() > bmp.getHeight()) {
                         smallWidth = dimension;
                         smallHeight = dimension*bmp.getHeight()/bmp.getWidth();
@@ -391,21 +374,22 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback {
                             int[] rgb = decodeYUV420SP(data, previewSize.width, previewSize.height);
                             Bitmap bmp = Bitmap.createBitmap(rgb, previewSize.width, previewSize.height, Bitmap.Config.ARGB_8888);
                             int smallWidth, smallHeight;
-                            int dimension = 200;
+                            int dimension;
                             // stream is lagging, cut resolution and catch up
                             if(displayTimeLag > 1500) {
-                                dimension = 50;
+                                dimension = PREFERRED_DIMENSION / 4;
                             } else if(displayTimeLag > 500) {
-                                dimension = 100;
+                                dimension = PREFERRED_DIMENSION / 2;
                             } else {
-                                dimension = 200;
+                                dimension = PREFERRED_DIMENSION;
                             }
-                            if(previewSize.width > previewSize.height) {
-                                smallWidth = dimension;
-                                smallHeight = dimension*previewSize.height/previewSize.width;
-                            } else {
+                            // Ensure the result is at least of the dimension size (width and height)
+                            if (previewSize.width > previewSize.height) {
                                 smallHeight = dimension;
                                 smallWidth = dimension*previewSize.width/previewSize.height;
+                            } else {
+                                smallWidth = dimension;
+                                smallHeight = dimension * previewSize.height / previewSize.width;
                             }
 
                             Matrix matrix = new Matrix();
